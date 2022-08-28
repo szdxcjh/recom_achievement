@@ -36,4 +36,4 @@ if __name__ == "__main__":
     walk_list = random_walk(Graph,3,3)
     #sg=1  skip—gram  hs=1 层级softmax将会被使用,hs=0且negative不为0，则负采样将会被选择使用
     w2v = gensim.models.Word2Vec(walk_list,sg=1,hs=1,negative=0)
-    print(w2v.wv['5'])
+    print(w2v.wv['0'])
