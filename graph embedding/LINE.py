@@ -14,16 +14,25 @@ class Line(nn.Module):
         self.graph = graph
         self.embed_size = embed_size
         self.first_order_embedding = nn.Embedding(node_nums,embed_size)
-        self.second_order_embedding = nn.Embedding(node_nums,embed_size)
+        self.second_order_center_embedding = nn.Embedding(node_nums,embed_size)
+        self.second_order_contex_embedding = nn.Embedding(node_nums,embed_size)
     
     def forward(self,nodes):
         #字符串节点需要做编码
         #nodes = torch.tensor(list(self.graph.nodes))
         nodes = torch.tensor(list(map(int,nodes)))
+        #一阶
         first_order_emb = self.first_order_embedding(nodes)
         first_order_combine_p = torch.exp(-torch.mm(first_order_emb,first_order_emb.T))
         first_order_combine_p = 1/(1 + first_order_combine_p)
-        return first_order_combine_p
+        
+        #二阶
+        second_order_cenemb = self.second_order_center_embedding(nodes)
+        second_order_conemb = self.second_order_contex_embedding(nodes)
+        second_order_combine_p = torch.exp(torch.mm(second_order_cenemb,second_order_conemb.T))
+        down = second_order_combine_p.sum(axis=1).unsqueeze(1)
+        second_order_combine_p = second_order_combine_p/down
+        return first_order_combine_p,second_order_combine_p
 
 
 
@@ -51,9 +60,10 @@ def frist_emp_distri(graph,edges):
 class first_order_loss(nn.Module):
     def __init__(self):
         super().__init__()
-    def forward(self,first_order_combine_p,emp_distri):
-        loss = - torch.sum(emp_distri * torch.log(first_order_combine_p))
-        return loss
+    def forward(self,first_order_combine_p,second_order_combine_p,emp_distri):
+        loss1 = - torch.sum(emp_distri * torch.log(first_order_combine_p))
+        loss2 = - torch.sum(emp_distri * torch.log(second_order_combine_p))
+        return loss1 + loss2
     
 
 if __name__ == "__main__":
@@ -69,8 +79,8 @@ if __name__ == "__main__":
     loss_func = first_order_loss()
     for epoch in range(epoches):
         optimizer.zero_grad()
-        first_order_combine_p = model(nodes)
-        loss = loss_func(first_order_combine_p,emp_distri)
+        first_order_combine_p,second_order_combine_p = model(nodes)
+        loss = loss_func(first_order_combine_p,second_order_combine_p,emp_distri)
         loss.backward()
         optimizer.step()
         print("loss:{}".format(loss))
