@@ -1,6 +1,5 @@
 """
-struc2vec:
-1.获取节点，以及他们的邻居
+struc2vec
 """
 import networkx as nx
 import random
