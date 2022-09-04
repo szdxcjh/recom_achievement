@@ -3,3 +3,7 @@
 已完成：
 
 - itemcf
+
+正在完成：
+
+- lightgcn
